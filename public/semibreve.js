@@ -1,3 +1,6 @@
+//Elementos:
+const wrapperPartitura = document.getElementById("wrapperPartitura");
+
 //Variáveis:
 var partitura = null;
 var partes = [];
@@ -32,10 +35,14 @@ const Claves = Object.freeze({
 
 //Classes:
 class Nota {
-	constructor() {
+	constructor(argCompasso) {
 		this.altura = [Alturas.C,4];
 		this.duracao = 4;
 		this.tipo = Figuras.semibreve;
+		this.elemento = document.createElement("img");
+		this.elemento.classList.add("figura");
+		this.elemento.src = "#";
+		this.compasso = argCompasso;
 	}
 	xml() {
 		let elementoXML = document.createElement("note");
@@ -54,6 +61,10 @@ class Nota {
 		elTipo.innerText = this.tipo;
 		elementoXML.appendChild(elTipo);
 		return elementoXML;
+	}
+	desenhar() {
+		console.log("Desenhei nota!");
+		this.compasso.elemento.appendChild(this.elemento);
 	}
 }
 class AtributosCompasso {
@@ -93,10 +104,13 @@ class AtributosCompasso {
 	}
 }
 class Compasso {
-	constructor(argNumero) {
+	constructor(argNumero, argPauta) {
 		this.numero = argNumero;
 		this.atributos = new AtributosCompasso();
-		this.notas = [new Nota()];
+		this.notas = [new Nota(this)];
+		this.elemento = document.createElement("div");
+		this.elemento.classList.add("compasso");
+		this.pauta = argPauta;
 	}
 	xml() {
 		let elementoXML = document.createElement("measure");
@@ -107,21 +121,54 @@ class Compasso {
 		}
 		return elementoXML;
 	}
+	desenhar() {
+		this.pauta.elemento.appendChild(this.elemento);
+		for (let i = 0; i < this.notas.length; i++) {
+			this.notas[i].desenhar();
+		}
+	}
+}
+class Pauta {
+	constructor(argParte) {
+		this.compassos = [new Compasso(1,this)];
+		this.elemento = document.createElement("div");
+		this.elemento.classList.add("pauta");
+		this.parte = argParte;
+	}
+	xml() {
+		let elementoXML = document.createElement("part");
+		elementoXML.id = this.parte.id;
+		for (let i = 0; i < this.compassos.length; i++) {
+			elementoXML.appendChild(this.compassos[i].xml());
+		}
+		return elementoXML;
+	}
+	desenhar() {
+		this.parte.elemento.appendChild(this.elemento);
+		for (let i = 0; i < this.compassos.length; i++) {
+			this.compassos[i].desenhar();
+		}
+	}
 }
 class Parte {
 	constructor(argID="P1",argNome="Music") {
 		this.id=argID;
 		this.nome=argNome;
-		this.compassos = [new Compasso(1)];
+		this.pautas = [new Pauta(this)];
 		partes.push(this);
+		this.elemento = document.createElement("div");
+		this.elemento.classList.add("parte");
 	}
-	xml() {
-		let elementoXML = document.createElement("part");
-		elementoXML.id = this.id;
-		for (let i = 0; i < this.compassos.length; i++) {
-			elementoXML.appendChild(this.compassos[i].xml());
+	xml(argPai) {
+		for (let i = 0; i < this.pautas.length; i++) {
+			argPai.appendChild(this.pautas[i].xml());
 		}
-		return elementoXML;
+	}
+	desenhar() {
+		wrapperPartitura.appendChild(this.elemento);
+		for (let i = 0; i < this.pautas.length; i++) {
+			this.pautas[i].desenhar();
+		}
 	}
 }
 class Partitura {
@@ -143,9 +190,16 @@ class Partitura {
 			parteNome.innerText = parte.nome;
 			parteListagem.appendChild(parteNome);
 			listaPartes.appendChild(parteListagem);
-			elementoXML.appendChild(parte.xml());
+			//elementoXML.appendChild(parte.xml());
+			parte.xml(elementoXML);
 		}
 		return elementoXML;
+	}
+	desenhar() {
+		for (let i = 0; i < this.partes.length; i++) {
+			const parte = this.partes[i];
+			parte.desenhar();
+		}
 	}
 }
 
@@ -166,7 +220,11 @@ function exibirXML() {
 function novaPartitura() {
 	new Partitura();
 }
+function redesenharPartitura() {
+	partitura.desenhar();
+}
 
 //Comandos:
 novaPartitura();
 console.log(exibirXML());
+redesenharPartitura();
